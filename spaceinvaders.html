@@ -1,5 +1,6 @@
 <html>
     <head>
+        <!-- All sprite designs are inspired by the original Space Invaders game by Tomohiro Nishikado. Design credits go entirely to it. Sprites were drawn by Incy with reference to the originals in an 8-bit art software. https://tgdwyer.github.io/asteroids/ Was heavily referenced in the spaceinvaders.ts code. -->
         <style>
             @import url(style.css);
             p.highlight {
@@ -18,8 +19,22 @@
             <text x="15" y="30" id="scoreText">SCORE</text>
             <text x="110" y="30" id="scoreValue">0</text>
             <g id="cannon" transform="translate(282,565)">
-                <image id="cannonSprite" href="cannon.png" />
+                <image id="cannonSprite" href="cannon.png" />  
+            </g>
+            <!-- Gap: 60, shieldwidth:80, bordergap: 50 -->
+            <g id="shield" transform="translate(50, 470)">
+                <rect class="shield" width="80" height="50"/> 
+            </g>
+            <g id="shield" transform="translate(190, 470)">
+                <rect class="shield" width="80" height="50"/> 
+            </g>
+            <g id="shield" transform="translate(330, 470)">
+                <rect class="shield" width="80" height="50"/> 
+            </g>
+            <g id="shield" transform="translate(470, 470)">
+                <rect class="shield" width="80" height="50"/> 
             </g>
           </svg>
+          <!-- <p class="instructionsText">Move: Arrow keys Shoot: Space-bar</p> -->
     </body>
 </html>
