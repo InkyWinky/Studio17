@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <style>
+            @import url(style.css);
+            p.highlight {
+                color: red;
+            }
+            svg {
+                background-color: rgb(41, 41, 36);
+            }
+        </style>
+        <script src="./dist/spaceinvaders.js"></script>
+    </head>
+    <body>
+        <h1>Space Invaders</h1>
+   
+          <svg id="canvas" width="600" height="600">
+            <text x="15" y="30" id="scoreText">SCORE</text>
+            <text x="110" y="30" id="scoreValue">0</text>
+            <g id="cannon" transform="translate(282,565)">
+                <image id="cannonSprite" href="cannon.png" />
+            </g>
+          </svg>
+    </body>
+</html>
