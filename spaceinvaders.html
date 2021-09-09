@@ -13,9 +13,9 @@
         <script src="./dist/spaceinvaders.js"></script>
         <script src="svgCoordsGenerator.js"></script>
     </head>
-    <body>
+    <body id="body">
         <h1>Space Invaders</h1>
-   
+   <div id="svgWrapper">
           <svg id="canvas" width="600" height="600">
             <text x="15" y="30" id="scoreText">SCORE</text>
             <text x="110" y="30" id="scoreValue">0</text>
@@ -23,7 +23,7 @@
                 <image id="cannonSprite" href="sprites/cannon.png" />  
             </g>
             <g transform="translate(15,55)">
-                <image class="alien30" href="sprites/30alien.png" />  
+                <!-- <image class="alien30" href="sprites/30alien.png" />   -->
             </g>
             <!-- Gap: 70, shieldwidth:70, bordergap: 55 : leg:25, leggap:20, add 45 for x of other leg-->
             <g id="shield1">
@@ -111,6 +111,7 @@
                 <rect x="526" y="536" class="shield" width="19" height="4"/> 
                </g>
           </svg>
+        </div>
           <!-- <p class="instructionsText">Move: Arrow keys Shoot: Space-bar</p> -->
     </body>
 </html>
