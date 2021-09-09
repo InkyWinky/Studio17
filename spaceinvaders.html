@@ -11,6 +11,7 @@
             }
         </style>
         <script src="./dist/spaceinvaders.js"></script>
+        <script src="svgCoordsGenerator.js"></script>
     </head>
     <body>
         <h1>Space Invaders</h1>
@@ -18,22 +19,97 @@
           <svg id="canvas" width="600" height="600">
             <text x="15" y="30" id="scoreText">SCORE</text>
             <text x="110" y="30" id="scoreValue">0</text>
-            <g id="cannon" transform="translate(282,565)">
-                <image id="cannonSprite" href="cannon.png" />  
+            <g id="cannon" transform="translate(282,580)">
+                <image id="cannonSprite" href="sprites/cannon.png" />  
             </g>
-            <!-- Gap: 60, shieldwidth:80, bordergap: 50 -->
-            <g id="shield" transform="translate(50, 470)">
-                <rect class="shield" width="80" height="50"/> 
+            <g transform="translate(15,55)">
+                <image class="alien30" href="sprites/30alien.png" />  
             </g>
-            <g id="shield" transform="translate(190, 470)">
-                <rect class="shield" width="80" height="50"/> 
+            <!-- Gap: 70, shieldwidth:70, bordergap: 55 : leg:25, leggap:20, add 45 for x of other leg-->
+            <g id="shield1">
+                <!-- Top -->
+                <rect x="57" y="498" class="shield" width="66" height="2"/> 
+                <rect x="59" y="496" class="shield" width="62" height="2"/> 
+                <rect x="61" y="494" class="shield" width="58" height="2"/> 
+                <rect x="63" y="492" class="shield" width="54" height="2"/> 
+                <rect x="65" y="490" class="shield" width="50" height="2"/> 
+                <rect x="67" y="488" class="shield" width="46" height="2"/> 
+                <!-- Base -->
+                <rect x="55" y="500" class="shield" width="70" height="30"/> 
+                <!-- Left leg -->
+                <rect x="55" y="530"class="shield" width="25" height="2"/> 
+                <rect x="55" y="532" class="shield" width="23" height="2"/> 
+                <rect x="55" y="534" class="shield" width="21" height="2"/> 
+                <rect x="55" y="536" class="shield" width="19" height="4"/> 
+                <!-- RIght leg -->  
+                <rect x="100" y="530"class="shield" width="25" height="2"/> 
+                <rect x="102" y="532" class="shield" width="23" height="2"/> 
+                <rect x="104" y="534" class="shield" width="21" height="2"/> 
+                <rect x="106" y="536" class="shield" width="19" height="4"/> 
             </g>
-            <g id="shield" transform="translate(330, 470)">
-                <rect class="shield" width="80" height="50"/> 
+            <g id="shield2" >
+             <!-- Top -->
+             <rect x="197" y="498" class="shield" width="66" height="2"/> 
+             <rect x="199" y="496" class="shield" width="62" height="2"/> 
+             <rect x="201" y="494" class="shield" width="58" height="2"/> 
+             <rect x="203" y="492" class="shield" width="54" height="2"/> 
+             <rect x="205" y="490" class="shield" width="50" height="2"/> 
+             <rect x="207" y="488" class="shield" width="46" height="2"/> 
+             <!-- Base -->
+             <rect x="195" y="500" class="shield" width="70" height="30"/> 
+             <!-- Left leg -->
+             <rect x="195" y="530"class="shield" width="25" height="2"/> 
+             <rect x="195" y="532" class="shield" width="23" height="2"/> 
+             <rect x="195" y="534" class="shield" width="21" height="2"/> 
+             <rect x="195" y="536" class="shield" width="19" height="4"/> 
+             <!-- RIght leg -->  
+             <rect x="240" y="530"class="shield" width="25" height="2"/> 
+             <rect x="242" y="532" class="shield" width="23" height="2"/> 
+             <rect x="244" y="534" class="shield" width="21" height="2"/> 
+             <rect x="246" y="536" class="shield" width="19" height="4"/> 
             </g>
-            <g id="shield" transform="translate(470, 470)">
-                <rect class="shield" width="80" height="50"/> 
-            </g>
+            <g id="shield3" >
+                <!-- Top -->
+                <rect x="337" y="498" class="shield" width="66" height="2"/> 
+                <rect x="339" y="496" class="shield" width="62" height="2"/> 
+                <rect x="341" y="494" class="shield" width="58" height="2"/> 
+                <rect x="343" y="492" class="shield" width="54" height="2"/> 
+                <rect x="345" y="490" class="shield" width="50" height="2"/> 
+                <rect x="347" y="488" class="shield" width="46" height="2"/> 
+                <!-- Base -->
+                <rect x="335" y="500" class="shield" width="70" height="30"/> 
+                <!-- Left leg -->
+                <rect x="335" y="530"class="shield" width="25" height="2"/> 
+                <rect x="335" y="532" class="shield" width="23" height="2"/> 
+                <rect x="335" y="534" class="shield" width="21" height="2"/> 
+                <rect x="335" y="536" class="shield" width="19" height="4"/> 
+                <!-- RIght leg -->  
+                <rect x="380" y="530"class="shield" width="25" height="2"/> 
+                <rect x="382" y="532" class="shield" width="23" height="2"/> 
+                <rect x="384" y="534" class="shield" width="21" height="2"/> 
+                <rect x="386" y="536" class="shield" width="19" height="4"/> 
+               </g>
+               <g id="shield4" >
+                <!-- Top -->
+                <rect x="477" y="498" class="shield" width="66" height="2"/> 
+                <rect x="479" y="496" class="shield" width="62" height="2"/> 
+                <rect x="481" y="494" class="shield" width="58" height="2"/> 
+                <rect x="483" y="492" class="shield" width="54" height="2"/> 
+                <rect x="485" y="490" class="shield" width="50" height="2"/> 
+                <rect x="487" y="488" class="shield" width="46" height="2"/> 
+                <!-- Base -->
+                <rect x="475" y="500" class="shield" width="70" height="30"/> 
+                <!-- Left leg -->
+                <rect x="475" y="530"class="shield" width="25" height="2"/> 
+                <rect x="475" y="532" class="shield" width="23" height="2"/> 
+                <rect x="475" y="534" class="shield" width="21" height="2"/> 
+                <rect x="475" y="536" class="shield" width="19" height="4"/> 
+                <!-- RIght leg -->  
+                <rect x="520" y="530"class="shield" width="25" height="2"/> 
+                <rect x="522" y="532" class="shield" width="23" height="2"/> 
+                <rect x="524" y="534" class="shield" width="21" height="2"/> 
+                <rect x="526" y="536" class="shield" width="19" height="4"/> 
+               </g>
           </svg>
           <!-- <p class="instructionsText">Move: Arrow keys Shoot: Space-bar</p> -->
     </body>
