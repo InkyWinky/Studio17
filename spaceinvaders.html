@@ -19,6 +19,7 @@
     <body id="body">
         <h1>Space Invaders</h1>
    <div id="svgWrapper">
+     
           <svg id="canvas" width="600" height="600">
             <text x="15" y="30" id="scoreText">SCORE</text>
             <text x="110" y="30" id="scoreValue">0</text>
@@ -114,7 +115,11 @@
                 <rect x="526" y="536" class="shield" width="19" height="4"/> 
                </g>
           </svg>
+          <img id="normalShields" class="shieldIcon" src="sprites/normalShields.png">
+          <img id="invincibleShields" class="shieldIcon" src="sprites/invincibleShields.png">
         </div>
-          <p class="instructionsText">Move ← → Shoot: Space-bar</p>
+          <p class="instructionsText">Move: ← → Shoot: Space-bar</p>
+          <p class="instructionsText">Toggle invincible shields: press i</p>
+          <p class="instructionsText">Use ultimate: press r (only available over 55,000 pts)</p>
     </body>
 </html>

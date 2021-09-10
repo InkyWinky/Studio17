@@ -13,6 +13,7 @@ function spaceinvaders() {
   //################################### Starting constants ####################################
   const constants ={
     CANNON_WIDTH:36, //Potentially turn these into capital case
+    CANNON_HEIGHT:42,
     CANNON_SPEED:8,
     CANNON_ID:"cannon",
     CANVAS_WIDTH: 600,
@@ -26,13 +27,19 @@ function spaceinvaders() {
     ULTIMATE_SPEED:4,
     ULTIMATE_LENGTH:90,
     ULTIMATE_WIDTH:3,
+    ULTIMATE_SCORE_THRESHOLD:55000,
     NO_OF_LASERS:5,
     //Shield constants:
     SHIELD_HEIGHT:48,
-    SHIELD_WIDTH:30,
+    SHIELD_WIDTH:70,
     SHIELD_LEFT_XCOORD:55,
     SHIELD_BOTTOM_YCOORD:488,
     SHIELD_HORIZ_GAP:140,
+    SHIELD_DENT_URL:"./sprites/shieldDamage.png",
+    SHIELD_DENT_CLASS:"shieldDent",
+    SHIELD_DENT_WIDTH:10,
+    SHIELD_DENT_HEIGHT:12,
+    INVINCIBLE_SHIELD_ICON_ID:"invincibleShields",
     //Aliens
     ALIEN_START_SPEED:0.2,
     LVL_SPEED_INCREMENT:0.1,
@@ -73,11 +80,9 @@ function spaceinvaders() {
     bulletYDir?:number,
     createTime?:number //To delete bullets as we don't want too many, and also to time the ultimate
   }>
-  type ShieldHitboxItem = Readonly<{
-    xL: number,
-    xU: number,
-    yL: number,
-    yU: number
+  type ShieldPos = Readonly<{
+    xPos: number, //top- left corner coordinates
+    yPos:number,
   }>
 
   type State = Readonly<{
@@ -86,23 +91,23 @@ function spaceinvaders() {
     ultimateReady: boolean,
     ultimate:ReadonlyArray<Element>,
     aliens:ReadonlyArray<Element>,
-    shieldHitBox:ReadonlyArray<ShieldHitboxItem>,
+    shieldPositions:ReadonlyArray<ShieldPos>,
+    ignoreShieldHit?:ReadonlyArray<Element>,//list of places hit by bullet
     disappear:ReadonlyArray<Element>,
     count: number,
     ultCount:number,
     lvl:number,
     score:number,
     time:number,
+    iShield:boolean,
     isGameOver: boolean
- 
-
   }>
 
-  let INITIAL_SHIELD_HITBOXES:ShieldHitboxItem[]=
-  [{xL:constants.SHIELD_LEFT_XCOORD, xU: constants.SHIELD_LEFT_XCOORD+constants.SHIELD_WIDTH, yL:constants.SHIELD_BOTTOM_YCOORD, yU:constants.SHIELD_BOTTOM_YCOORD+constants.SHIELD_HEIGHT},
-  {xL:constants.SHIELD_LEFT_XCOORD+constants.SHIELD_HORIZ_GAP, xU:constants.SHIELD_LEFT_XCOORD+constants.SHIELD_WIDTH, yL:constants.SHIELD_BOTTOM_YCOORD, yU:constants.SHIELD_BOTTOM_YCOORD+constants.SHIELD_HEIGHT},
-  {xL:constants.SHIELD_LEFT_XCOORD+2*constants.SHIELD_HORIZ_GAP, xU:constants.SHIELD_LEFT_XCOORD+constants.SHIELD_WIDTH, yL:constants.SHIELD_BOTTOM_YCOORD, yU:constants.SHIELD_BOTTOM_YCOORD+constants.SHIELD_HEIGHT},
-  {xL:constants.SHIELD_LEFT_XCOORD+3*constants.SHIELD_HORIZ_GAP, xU:constants.SHIELD_LEFT_XCOORD+constants.SHIELD_WIDTH, yL:constants.SHIELD_BOTTOM_YCOORD, yU:constants.SHIELD_BOTTOM_YCOORD+constants.SHIELD_HEIGHT}]
+  const INITIAL_SHIELD_POS:ShieldPos[]=
+  [{xPos:constants.SHIELD_LEFT_XCOORD, yPos:constants.SHIELD_BOTTOM_YCOORD},
+  {xPos:constants.SHIELD_LEFT_XCOORD+constants.SHIELD_HORIZ_GAP, yPos:constants.SHIELD_BOTTOM_YCOORD},
+  {xPos:constants.SHIELD_LEFT_XCOORD+2*constants.SHIELD_HORIZ_GAP, yPos:constants.SHIELD_BOTTOM_YCOORD},
+  {xPos:constants.SHIELD_LEFT_XCOORD+3*constants.SHIELD_HORIZ_GAP, yPos:constants.SHIELD_BOTTOM_YCOORD}]
 
   const startState:State={//Starting position of the cannon, middle-bottom of canvas
     cannon: createCannon(),
@@ -110,13 +115,15 @@ function spaceinvaders() {
     ultimate:[],
     ultimateReady:true,
     aliens:[],
-    shieldHitBox:INITIAL_SHIELD_HITBOXES,
+    shieldPositions:INITIAL_SHIELD_POS,
+    ignoreShieldHit:[],
     disappear:[],
     count:0,
     ultCount:0,
     lvl: 0,
     score:0,
     time:0,
+    iShield:true,
     isGameOver:false,
     
   }
@@ -128,9 +135,10 @@ function spaceinvaders() {
   class Tick { constructor(public readonly elapsed:number) {} } //unit of time
   class Spawn {constructor(public readonly spawn:boolean){}} //For when to spawn aliens
   class Ultimate{constructor(){}}
+  class Ishield{constructor(){}}//toggle invincible shields
 
   //Might not need keyup at all
-  type Key = 'ArrowLeft' | 'ArrowRight' | 'Space'| 'KeyX'|'KeyR'
+  type Key = 'ArrowLeft' | 'ArrowRight' | 'Space'| 'KeyX'|'KeyR'|'KeyI'
   const keyObs = <T>( key:Key, action:()=>T)=>
     fromEvent<KeyboardEvent>(document,'keydown')
       .pipe(
@@ -141,6 +149,7 @@ function spaceinvaders() {
   startShoot = keyObs( 'Space', ()=>new Shoot()),
   startGame = keyObs('KeyX', ()=>new Spawn(true)),
   alienShoot= interval(constants.ALIEN_SHOOT_INTERVAL).pipe(map(()=>new AlienShoot())),
+  toggleInvincibleShields=keyObs( 'KeyI', ()=>new Ishield()),
   fireUltimate = keyObs('KeyR', ()=>new Ultimate())
 
   // type Key = 'ArrowLeft' | 'ArrowRight' | 'Space'| 'KeyX'|'KeyR'
@@ -218,7 +227,7 @@ function createBullet(state:State, friendly:boolean):Element{
     bulletYDir:-1,
     createTime:state.time
   }
-  else {
+  else if (state.aliens){ //check if state.aliens is defined first
     const randomLiveAlien = state.aliens[randomInt(state.aliens.length)]
   return{
     id:`Abullet${state.count}`, //identify bullet
@@ -370,9 +379,31 @@ function elementWidth(element:Element){
     return constants.SHIELD_WIDTH
   }}
   else return 0
-
 }
- 
+
+function elementHeight(element:Element){ 
+  //Return the height of the input element
+  if(element.id){
+  if (element.id.startsWith("alien")){
+  return constants.ALIEN_HEIGHT
+  }
+  else if (element.id.startsWith(constants.CANNON_ID)){
+    return constants.CANNON_HEIGHT
+  }
+  else if (element.id.startsWith("shield")){
+    return constants.SHIELD_HEIGHT
+  }}
+  else return 0
+}
+
+
+function createShield(shieldPos:ShieldPos):Element{
+  return{
+    id:"shield",
+    xPos: shieldPos.xPos,
+    yPos:shieldPos.yPos
+  }
+}
 
   const checkHits= (state:State) => {
     const
@@ -380,6 +411,11 @@ function elementWidth(element:Element){
         array: ReadonlyArray<T>,
         mappingFn: (array: T) => ReadonlyArray<U>
       ) => Array.prototype.concat(...array.map(mappingFn)),
+         // Check if not in array:
+         notIn = (searchKey:ReadonlyArray<Element>) => (searchEl:Element) => searchKey.findIndex(el=>el.id === searchEl.id) < 0,
+         // everything in the first array that's not in b
+         except = (arr1:ReadonlyArray<Element>) => (arr2:ReadonlyArray<Element>) => arr1.filter(notIn(arr2)),
+    
 
       bulletHit = ([bullet,element]:[Element,Element]) => 
       bullet.id?
@@ -387,23 +423,46 @@ function elementWidth(element:Element){
 
         (bullet.xPos+constants.BULLET_RADIUS>element.xPos)&&
         (bullet.xPos+constants.BULLET_RADIUS<element.xPos+elementWidth(element))&&
-        (bullet.yPos-constants.BULLET_RADIUS<element.yPos+constants.ALIEN_HEIGHT)&&
+        (bullet.yPos-constants.BULLET_RADIUS<element.yPos+elementHeight(element))&&
         (element.yPos+constants.BULLET_RADIUS>element.yPos):false:false,
       enemyBulletHit= ([bullet,element]:[Element,Element])=>
-  
-      bullet.id?
-      bullet.id.startsWith("A")?
-      (bullet.xPos+constants.BULLET_RADIUS>element.xPos)&&
-      (bullet.xPos+constants.BULLET_RADIUS<element.xPos+elementWidth(element))&&
-      (bullet.yPos+constants.BULLET_RADIUS>element.yPos)&&
-      (element.yPos-constants.BULLET_RADIUS<element.yPos):false:false,
-        // (((bullet.xPos+constants.BULLET_RADIUS)>element.xPos&&(bullet.xPos+constants.BULLET_RADIUS)<element.xPos+elementWidth(element))
-        // ||
-        // ((bullet.xPos-constants.BULLET_RADIUS)<element.xPos+elementWidth(element)&&(bullet.xPos-constants.BULLET_RADIUS)>element.xPos
-        // ))&&
-        // (bullet.yPos-constants.BULLET_RADIUS<element.yPos+constants.ALIEN_HEIGHT),
+    
+        bullet.id?
+        bullet.id.startsWith("A")?
+        (bullet.xPos+constants.BULLET_RADIUS>element.xPos)&&
+        (bullet.xPos+constants.BULLET_RADIUS<element.xPos+elementWidth(element))&&
+        (bullet.yPos+constants.BULLET_RADIUS>element.yPos)&&
+        (element.yPos-constants.BULLET_RADIUS<element.yPos):false:false,
+       
       cannonHit = 
       state.bullets.filter(bullet =>enemyBulletHit([bullet, state.cannon])).length >0,//check if cannon is hit
+      
+      //Shield hit checking
+      shieldHit = ([element1, ignoreElement]:[Element, Element])=>
+      (element1.xPos+constants.BULLET_RADIUS>ignoreElement.xPos)&&
+      (element1.xPos+constants.BULLET_RADIUS<ignoreElement.xPos+constants.SHIELD_WIDTH)&&
+      (((element1.yPos-constants.BULLET_RADIUS<ignoreElement.yPos+constants.SHIELD_HEIGHT)&&
+      (element1.yPos-constants.BULLET_RADIUS>ignoreElement.yPos))||
+      (element1.yPos+constants.BULLET_RADIUS>ignoreElement.yPos)&&
+      (element1.yPos+constants.BULLET_RADIUS<ignoreElement.yPos+constants.SHIELD_HEIGHT)
+      ),
+      // ([bullet,element]:[Element,Element])=>bulletHit([bullet,element])?true:enemyBulletHit([bullet,element])?true:false, //Shield can be hit from both top and bottom
+
+      notSamePosition =(element1:Element, ignoreElement:Element)=>
+      !((element1.xPos+constants.BULLET_RADIUS>ignoreElement.xPos)&&
+      (element1.xPos+constants.BULLET_RADIUS<ignoreElement.xPos+constants.SHIELD_DENT_WIDTH)&&
+      (((element1.yPos-constants.BULLET_RADIUS<ignoreElement.yPos+constants.SHIELD_DENT_HEIGHT)&&
+      (element1.yPos-constants.BULLET_RADIUS>ignoreElement.yPos))||
+      (element1.yPos+constants.BULLET_RADIUS>ignoreElement.yPos)&&
+      (element1.yPos+constants.BULLET_RADIUS<ignoreElement.yPos+constants.SHIELD_DENT_HEIGHT)
+      )),
+      
+      allBulletsAndShields =mergeMap(state.bullets, bul=> state.shieldPositions.map(createShield).map<[Element,Element]>(al=>([bul,al]))),
+      hitBulletsAndShields=allBulletsAndShields.filter(shieldHit),
+      bulletsThatHitShield = hitBulletsAndShields.map(([bullet,_])=>bullet),
+
+      filteredShieldBullets=state.ignoreShieldHit.forEach(elem=>bulletsThatHitShield.filter(bullet=>notSamePosition(bullet,elem))),
+      
       allBulletsAndAliens = mergeMap(state.bullets, bul=> state.aliens.map<[Element,Element]>(al=>([bul,al]))),//
       hitBulletsAndAliens = allBulletsAndAliens.filter(bulletHit),
       hitBullets = hitBulletsAndAliens.map(([bullet,_])=>bullet),
@@ -413,22 +472,21 @@ function elementWidth(element:Element){
       (laser.xPos+constants.ULTIMATE_WIDTH<element.xPos+elementWidth(element)), //Do when alien is hit
       allLasersAndAliens = mergeMap(state.ultimate, las=> state.aliens.map<[Element,Element]>(al=>([las,al]))),//
       hitLasersAndAliens =allLasersAndAliens.filter(laserHit),
-      laseredAliens = hitLasersAndAliens.map(([_,alien])=>alien),
-        
-      // Check if not in array:
-      notIn = (searchKey:ReadonlyArray<Element>) => (searchEl:Element) => searchKey.findIndex(el=>el.id === searchEl.id) < 0,
-      // everything in the first array that's not in b
-      except = (arr1:ReadonlyArray<Element>) => (arr2:Element[]) => arr1.filter(notIn(arr2))
-    function updateScore(acc:number, alien:Element):number{ //accumulating function for score
+      laseredAliens = hitLasersAndAliens.map(([_,alien])=>alien)
+      
+      //Check if bullet hit shield, if it has, add bullet to ignore list
+    
+      function updateScore(acc:number, alien:Element):number{ //accumulating function for score
         return acc+alien.alienPts
-    }
+    };
     return <State>{             
       ...state,
-      bullets: except(state.bullets)(hitBullets),
+      bullets: except(state.bullets)(hitBullets.concat(bulletsThatHitShield)),
       aliens: except(state.aliens)(hitAliens.concat(laseredAliens)),
-      disappear: state.disappear.concat(hitBullets,hitAliens, laseredAliens),
+      disappear: state.disappear.concat(hitBullets,hitAliens,laseredAliens, bulletsThatHitShield),
       isGameOver: cannonHit,
-      score:hitAliens.reduce(updateScore, state.score)
+      score:hitAliens.reduce(updateScore, state.score),
+      ignoreShieldHit:state.ignoreShieldHit.concat(bulletsThatHitShield)
     }
 }
 
@@ -442,16 +500,22 @@ function elementWidth(element:Element){
      
       bullets:state.bullets.concat([createBullet(state, true)]),
       count: state.count + 1
-    }:action instanceof Ultimate ?  {
+    }:action instanceof Ultimate ? (state.score>=constants.ULTIMATE_SCORE_THRESHOLD)? {
       ...state, 
      
       ultimate:state.ultimate.concat(createUltimate(state)),
       ultCount: state.ultCount + constants.NO_OF_LASERS
-    }: action instanceof AlienShoot?
+    }:
+    state: 
+    action instanceof AlienShoot?
     {
       ...state, 
       bullets:state.bullets.concat([createBullet(state, false)]),
       count: state.count + 1
+    }: action instanceof Ishield?
+    {
+      ...state, 
+      iShield:state.iShield?false:true //Toggle invincible shields on and off
     }:
     action instanceof Spawn?//To spawn new aliens at a new level, consider also increasing the level here?
    state.aliens.length===0?createAliens(0,state):state:
@@ -478,6 +542,7 @@ function elementWidth(element:Element){
     //Create aliens on canvas
     state.aliens.forEach(alien=>{
       const drawAlien=()=>{
+        console.log("drawDent")
         const alienSvg = document.createElement('img')!;
         alienSvg.src=alien.alienPts===constants.BOT_ALIEN_PTS?
               constants.BOT_ALIEN_URL:
@@ -571,6 +636,38 @@ function elementWidth(element:Element){
       if(elementSvg) elementSvg.remove();
     }}
     })
+    if (!state.iShield){
+    document.getElementById("invincibleShields").style.display="none";
+    state.ignoreShieldHit.forEach(element=>{
+      // console.log(JSON.stringify(state.disappear))
+     
+
+        const drawShieldDent=()=>{
+     
+          // const shieldDentSvg = document.createElement('img')!; //Show death of alien
+          // shieldDentSvg.src=constants.SHIELD_DENT_URL;
+          const shieldDentSvg  = document.createElementNS( document.getElementById("canvas").namespaceURI, "circle")!;
+          
+          shieldDentSvg.setAttribute("id", "shield"+"element.xPos"+"element.yPos");
+          shieldDentSvg.classList.add(constants.SHIELD_DENT_CLASS); //set width of the death picture to be the same as original alien (determiend by the number of points they're worth)
+          document.getElementById("canvas").appendChild(shieldDentSvg) //Use div as cannot append image to svg canvas
+          return shieldDentSvg
+        }     
+        const shieldDentSvg = drawShieldDent() || document.getElementById("shield"+"element.xPos"+"element.yPos")       
+        shieldDentSvg.setAttribute("fill","black")
+        shieldDentSvg.setAttribute("cx",String(element.xPos))
+        shieldDentSvg.setAttribute("cy",String(element.yPos))
+        shieldDentSvg.setAttribute("r", String(constants.SHIELD_DENT_WIDTH));
+        // shieldDentSvg.style.position = 'absolute';
+        // shieldDentSvg.style.top = String(element.yPos);
+        // shieldDentSvg.style.left = String(element.xPos);
+        // alienImg.style.animationName= "die";
+        // alienImg.style.animationDuration="2s"
+      
+        })}
+        else{
+          document.getElementById("invincibleShields").style.display="block";
+        }
 
     //Game over
     if(state.isGameOver){
@@ -599,7 +696,7 @@ function elementWidth(element:Element){
     map(elapsed=>new Tick(elapsed)),
     merge(
       moveLeft,moveRight),
-    merge(startShoot,startGame,fireUltimate, alienShoot),
+    merge(startShoot,startGame,fireUltimate, alienShoot, toggleInvincibleShields),
     scan(reduceState, startState))
   .subscribe(showOnScreen);
  
@@ -613,4 +710,3 @@ function elementWidth(element:Element){
 
  
 
-// Toggle stream for pause/play/restart: https://plnkr.co/edit/WmpO7C5w9Eh54AaHIGxG?p=preview&preview https://stackoverflow.com/questions/38950435/rxjs-resubscribe-to-unsubscribed-observable

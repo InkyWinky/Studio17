@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+BODY, H2, H3, H4, H5, H6, TH, TD {
+font-family: arial, helvetica, sans-serif;
+
+}
+H1 {
+    padding: 20px;
+    font-size: 38px;
+    font-style: italic;
+    color: white;
+    font-family: 'Press Start 2P', cursive;
+}
+body{
+    background-color: black;
+    text-align: center;
+}
+#canvas{
+    border: 8px;
+    border-style: solid;
+    border-radius: 5px;
+    border-color: white;
+    background-color: black;
+    position: relative;
+ 
+}
+#cannonSprite{
+    width: 36px;
+
+}
+#canvasWrapper{
+    position: relative;
+    /* text-align: center; */
+}
+#scoreText{
+    font-family: 'Press Start 2P', cursive;
+
+    fill: white;
+}
+#scoreValue{
+    font-family: 'Press Start 2P', cursive;
+    fill: #26ec2e;
+}
+img{
+    position:absolute;
+    top: 650px;
+}
+.instructionsText{
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    margin-top: 40px;
+}
+
+.bullet{
+    fill:#26ec2e;
+}
+.shield{
+    fill:#26ec2e;
+}
+.alien30{
+    width:22px;
+}
+.alien20{
+    width:28px;
+}
+
+.alien10{
+    width:34px;
+}
+#svgWrapper{
+    width: 600px;
+    height: 600px;
+    position: relative;
+    margin:0 auto;
+}
+#gameOverText{
+    /* Consider adding animation */
+    color: white;
+    font-size:45px;
+    font-family:  'Press Start 2P', cursive;
+    animation-name: blink;
+    animation-duration: 5s;
+}
+ @keyframes blink{
+    0% {color: #ff00ff;}
+    20% {color: black}
+    30% {color: #ff00ff;}
+    60% {color: black}
+    80%{color: #ff00ff;}
+    100% {color: white}
+} 
+@keyframes die{
+    from {display:absolute}
+    to {display:none}
+}
+.shieldDent {
+    width:10px;
+}
+
+/* Ultimate colours */
+.ultimateA{
+    fill:#a800ff
+}
+.ultimateB{
+    fill:
+    #0079ff
+}
+.ultimateC{
+    fill:#00f11d
+}
+.ultimateD{
+    fill:#ffef00
+}
+.ultimateE{
+    fill:#ff7f00
+}
+.ultimateF{
+    fill:#ff0900
+}
+.shieldIcon{
+    position:absolute;
+    top:20px;
+
+    right:10px;
+    width:20px;
+}
+#invincibleShields{
+    display:none
+}
+#restartText{
+    color: white;
+    font-size:45px;
+    font-family:  'Press Start 2P', cursive;
+    animation-name: fade-in;
+    animation-duration: 2s;
+    animation-delay: 5s;
+    display:none
+}
+@keyframes fade-in{
+    from {display:none}
+    to{display:block}
+}
