@@ -2,7 +2,11 @@
     <head>
         <!-- All sprite designs are inspired by the original Space Invaders game by Tomohiro Nishikado. 
             Design credits go entirely to it. Sprites were drawn by Incy with reference to the originals 
-            in an 8-bit art software. https://tgdwyer.github.io/asteroids/ Was heavily referenced in the
+            in an 8-bit art software. Sounds were downloaded from:
+            https://www.classicgaming.cc/classics/space-invaders/sounds.
+            Laser sound from: https://www.findsounds.com/ISAPI/search.dll?start=11&keywords=laser&seed=37
+            ufo kill sound from: https://freesound.org/people/Aiwha/sounds/196106/
+            https://tgdwyer.github.io/asteroids/ Was heavily referenced in the
             spaceinvaders.ts code. -->
         <style>
             @import url(style.css);
@@ -121,5 +125,14 @@
           <p class="instructionsText">Move: ← → Shoot: Space-bar</p>
           <p class="instructionsText">Toggle invincible shields: press i</p>
           <p class="instructionsText">Use ultimate: press r (only available over 55,000 pts)</p>
+<!-- Audio -->
+          <audio id="shoot" controls>  <source src="sounds/shoot.wav" type="audio/mpeg"></audio>
+          <audio id="invaderKilled" src="sounds/invaderkilled.wav" type="audio/mpeg"></audio>
+          <audio id="ufo">  <source src="sounds/ufo_lowpitch.wav"></audio>
+          <audio id="ufoKill">  <source src="sounds/ufoKill.wav"></audio>
+          <audio id="cannonDeath">  <source src="sounds/explosion.wav" type="audio/mpeg"></audio>
+          <audio id="laserSound">  <source src="sounds/Laser-Shot-1.mp3" type="audio/mpeg"></audio>
+          <!-- Play/Pause/Restart -->
+        <input type="checkbox" id="playing" checked>
     </body>
 </html>
