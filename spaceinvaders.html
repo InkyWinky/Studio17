@@ -18,7 +18,7 @@
             }
         </style>
         <script src="./dist/spaceinvaders.js"></script>
-        <script src="svgCoordsGenerator.js"></script>
+       
     </head>
     <body id="body">
         <h1>Space Invaders</h1>
@@ -126,13 +126,12 @@
           <p class="instructionsText">Toggle invincible shields: press i</p>
           <p class="instructionsText">Use ultimate: press r (only available over 55,000 pts)</p>
 <!-- Audio -->
-          <audio id="shoot" controls>  <source src="sounds/shoot.wav" type="audio/mpeg"></audio>
+          <audio id="shoot">  <source src="sounds/shoot.wav" type="audio/mpeg"></audio>
           <audio id="invaderKilled" src="sounds/invaderkilled.wav" type="audio/mpeg"></audio>
           <audio id="ufo">  <source src="sounds/ufo_lowpitch.wav"></audio>
           <audio id="ufoKill">  <source src="sounds/ufoKill.wav"></audio>
           <audio id="cannonDeath">  <source src="sounds/explosion.wav" type="audio/mpeg"></audio>
           <audio id="laserSound">  <source src="sounds/Laser-Shot-1.mp3" type="audio/mpeg"></audio>
           <!-- Play/Pause/Restart -->
-        <input type="checkbox" id="playing" checked>
     </body>
 </html>

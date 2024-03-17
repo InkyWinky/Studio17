@@ -129,7 +129,8 @@ function spaceinvaders() {
     iShield:boolean,
     isGameOver: boolean,
     UFO:ReadonlyArray<Element>,
-    canRestart?:boolean
+    canRestart?:boolean,
+    restarted?:boolean
   }>
 
   const INITIAL_SHIELD_POS:ShieldPos[]=
@@ -155,7 +156,8 @@ function spaceinvaders() {
     iShield:true,
     isGameOver:false,
     UFO:[],
-    canRestart: false
+    canRestart: false,
+    restarted: false
   }
 
 //##################################### Observing keys and performing actions ##################################  
@@ -243,7 +245,11 @@ function spaceinvaders() {
       state.isGameOver?
       {
         ...startState,
-        isGameOver:true
+        disappear:state.disappear.concat(state.bullets),
+        canRestart:true,
+        isGameOver:true,
+        restarted:false
+        
       }:
     state.aliens.length===0?
     // state.lvl===0? 
@@ -253,7 +259,8 @@ function spaceinvaders() {
       ...state,
       bullets:[],
       aliens:[],
-      isGameOver:true
+      isGameOver:true,
+      restarted:false
     }:
       anyAlienAtEdge(state)? //Check if aliens are at the left or right borders, if so, shift them down
       checkHits({
@@ -264,6 +271,7 @@ function spaceinvaders() {
         aliens: state.aliens.map(alienMoveDownChangeDir),
         disappear:endedBullets.concat(endedLasers, alienAtEdge(state.UFO[0])?state.UFO:[]),
         time: elapsed,
+        restarted:false,
         //Below checks if there are any ufo existing, if there are check if it's at the edge and delete it accordingly,
         //If there are none then don't check at edge and create if neccessary
         UFO: shouldCreateUFO(state)?[createUFO(state)]:alienAtEdge(state.UFO[0])?
@@ -277,6 +285,7 @@ function spaceinvaders() {
       aliens: state.aliens.map(moveAlien),
       disappear:endedBullets.concat(endedLasers, alienAtEdge(state.UFO[0])?state.UFO:[]),
       time: elapsed,
+      restarted:false,
       UFO: shouldCreateUFO(state)?[createUFO(state)]:alienAtEdge(state.UFO[0])?
       []:state.UFO.map(moveAlien)
     }))
@@ -591,14 +600,27 @@ function createShield(shieldPos:ShieldPos):Element{
       score:hitAliens.concat(UfoThatWasHit).reduce(updateScore, state.score), //also add ufo that was hit to score
       ignoreShieldHit:state.ignoreShieldHit.concat(bulletsThatHitShield),
       UFO:except(state.UFO)(UfoThatWasHit),
-      canRestart: cannonHit //If cannon is hit then activate restart option
+      canRestart: false //If cannon is hit then activate restart option
     }
 };
 
 function moveCannon(cannon:Element):number{
    return horizWrap(cannon.xPos+cannon.cannonMotion)
 }
+
   const reduceState = (state: State, action:Move|Shoot|Tick|Restart)=>
+  
+  state.isGameOver?
+  action instanceof Restart?
+    {...startState,
+      restarted:true,}:
+    {...startState,
+    
+      isGameOver: true,
+      canRestart: true,
+      restarted:false,
+      disappear:state.disappear.concat(state.bullets),
+    }:
     action instanceof Move ?{
       ...state,
       cannon: {id:constants.CANNON_ID, xPos: moveCannon(state.cannon), yPos: constants.CANNON_Y_POS, cannonMotion: action.xDirection}
@@ -624,9 +646,9 @@ function moveCannon(cannon:Element):number{
     {
       ...state, 
       iShield:state.iShield?false:true //Toggle invincible shields on and off
-    }:
-    action instanceof Restart?
-    state.canRestart?startState:state: //Only restart if canRestart is true
+    }: action instanceof Restart?
+    state.canRestart?startState:state:
+    //Only restart if canRestart is true
     tick(state, action.elapsed);
 //###################################### Showing changes on the screen ################################
   function showOnScreen(state:State): void{ 
@@ -799,7 +821,7 @@ function moveCannon(cannon:Element):number{
           document.getElementById("invincibleShields").style.display="block"; 
         }
     //Game over
-    if(state.isGameOver){
+    if(state.isGameOver&&!state.canRestart){
     // game$.unsubscribe();
 
     //Show game over text
@@ -810,6 +832,14 @@ function moveCannon(cannon:Element):number{
     gameOverText.setAttribute("id", "gameOverText")
     gameOverText.textContent = "Game Over";
     document.getElementById("svgWrapper").appendChild(gameOverText);
+    //Show restart text
+    const restartText = document.createElement("h")!;
+    restartText.style.position="absolute";
+    restartText.style.left=String(constants.CANVAS_WIDTH/4);
+    restartText.style.top=String(2*constants.CANVAS_WIDTH/4);
+    restartText.setAttribute("id", "restartText")
+    restartText.textContent = "Press x to restart";
+    document.getElementById("svgWrapper").appendChild(restartText);
     //Remove cannon sprite
     document.getElementById(constants.CANNON_ID).style.display="none";
     //Show destroyed cannon
@@ -822,7 +852,18 @@ function moveCannon(cannon:Element):number{
     document.getElementById("svgWrapper").appendChild(deadCannonImg);
     //Play cannon death audio
     playAudio(constants.CANNON_KILLED_SOUND_ID)
+    }
+  if (state.restarted){
+    if(document.getElementById(constants.DEAD_CANNON_ID)){document.getElementById(constants.DEAD_CANNON_ID).remove()}
+    document.getElementById(constants.CANNON_ID).style.display="inline";
+    if(document.getElementById("gameOverText")){
+      document.getElementById("gameOverText").remove()
+    }
+    if(document.getElementById("restartText")){
+      document.getElementById("restartText").remove()
   }
+
+}
     //Show cannon motion
     const cannon = document.getElementById(constants.CANNON_ID)!;
     cannon.setAttribute('transform',
@@ -855,7 +896,7 @@ gamePlay$=interval(10)
   .pipe(
     map(elapsed=>new Tick(elapsed)),
     merge(
-      moveLeft,moveRight, stopMoveLeft, stopMoveRight),
+      moveLeft,moveRight, stopMoveLeft, stopMoveRight, restartGame),
     merge(startShoot,fireUltimate, alienShoot, toggleInvincibleShields),
     scan(reduceState, startState)).subscribe(showOnScreen)
   }
